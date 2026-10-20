@@ -1,0 +1,13 @@
+{
+  "name": "release-sieve",
+  "version": "1.0.0",
+  "description": "Turn git history into a decision-ready release brief.",
+  "type": "module",
+  "bin": { "release-sieve": "./bin/release-sieve.js" },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check bin/release-sieve.js && node --check src/analyze.js"
+  },
+  "engines": { "node": ">=18" },
+  "license": "MIT"
+}
