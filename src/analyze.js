@@ -44,3 +44,26 @@ export function renderMarkdown(report) {
   lines.push("## Release signals", "", ...report.signals.map(signal => `- ${signal}`), "", "## Suggested ship checklist", "", "- [ ] Run the relevant automated checks", "- [ ] Verify the user-facing happy path", "- [ ] Confirm rollback or mitigation ownership", "");
   return lines.join("\n");
 }
+
+export function renderJson(report) {
+  return `${JSON.stringify({
+    schemaVersion: "1.0",
+    generatedBy: "release-sieve",
+    title: report.title,
+    comparison: { base: report.base, head: "HEAD" },
+    summary: {
+      commitCount: report.commits.length,
+      fileCount: report.files.length,
+      additions: report.additions,
+      deletions: report.deletions,
+      riskSignalCount: report.signals.filter(signal => !signal.startsWith("No automatic")).length
+    },
+    changes: Object.fromEntries(
+      Object.entries(report.groups)
+        .filter(([, commits]) => commits.length)
+        .map(([name, commits]) => [name.toLowerCase(), commits])
+    ),
+    files: report.files,
+    signals: report.signals
+  }, null, 2)}\n`;
+}

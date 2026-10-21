@@ -10,6 +10,7 @@ It is intentionally dependency-free and works offline—useful when release note
 - Summarizes files touched and lines added/removed
 - Flags paths and messages that often warrant a closer release review
 - Produces human-editable Markdown for PRs, changelogs, or release channels
+- Exports stable JSON for release dashboards, CI checks, and delivery bots
 - Runs on Node.js 18+ with no install step
 
 ## Quick start
@@ -26,6 +27,17 @@ Or install it globally from a checkout:
 npm install -g /path/to/release-sieve
 release-sieve HEAD~8 --out release-brief.md
 ```
+
+### Automate a release gate
+
+Use JSON when another tool needs to decide how to handle the release. The payload includes a schema version, categorized commits, file-level footprint, and a `riskSignalCount` that is `0` when no automatic concerns were found.
+
+```bash
+release-sieve v1.4.0 --format json --out release-brief.json
+node -e "const r = require('./release-brief.json'); process.exit(r.summary.riskSignalCount ? 1 : 0)"
+```
+
+`--format markdown` remains the default. JSON is deliberately local and deterministic, making it suitable for CI artifacts without an API token.
 
 ## Example output
 
@@ -54,7 +66,6 @@ The tool reads only local Git metadata and writes nothing unless `--out` is supp
 ## Future ideas
 
 - Configurable classification rules for team conventions
-- JSON output for release pipelines
 - Link commits to issue and pull-request metadata
 
 ## License

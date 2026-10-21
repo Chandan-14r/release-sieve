@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeHistory, renderMarkdown } from "../src/analyze.js";
+import { analyzeHistory, renderJson, renderMarkdown } from "../src/analyze.js";
 
 const commits = "abc123\x1ffeat(api): add export endpoint\x1edef456\x1ffix: handle empty response\x1eghi789\x1fdocs: clarify setup\x1e";
 const stat = "12\t2\tsrc/api.js\n3\t0\tconfig/auth.json";
@@ -22,4 +22,19 @@ test("renders a usable markdown brief", () => {
   const report = analyzeHistory(commits, stat, { title: "Ship it", base: "v1.0.0" });
   assert.match(renderMarkdown(report), /# Ship it/);
   assert.match(renderMarkdown(report), /Suggested ship checklist/);
+});
+
+test("renders stable machine-readable release data", () => {
+  const report = analyzeHistory(commits, stat, { title: "Ship it", base: "v1.0.0" });
+  const json = JSON.parse(renderJson(report));
+  assert.equal(json.schemaVersion, "1.0");
+  assert.deepEqual(json.comparison, { base: "v1.0.0", head: "HEAD" });
+  assert.deepEqual(json.summary, {
+    commitCount: 3,
+    fileCount: 2,
+    additions: 15,
+    deletions: 2,
+    riskSignalCount: 1
+  });
+  assert.equal(json.changes.features[0].subject, "feat(api): add export endpoint");
 });
