@@ -67,3 +67,25 @@ export function renderJson(report) {
     signals: report.signals
   }, null, 2)}\n`;
 }
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>\"']/g, character => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[character]);
+}
+
+export function renderHtml(report) {
+  const riskCount = report.signals.filter(signal => !signal.startsWith("No automatic")).length;
+  const groupMarkup = Object.entries(report.groups)
+    .filter(([, commits]) => commits.length)
+    .map(([name, commits]) => `<section class="changes"><h2>${escapeHtml(name)} <span>${commits.length}</span></h2><ul>${commits.map(commit => `<li><span>${escapeHtml(commit.subject)}</span><code>${escapeHtml(commit.sha.slice(0, 7))}</code></li>`).join("")}</ul></section>`)
+    .join("\n");
+  const signalMarkup = report.signals.map(signal => `<li>${escapeHtml(signal).replace(/`([^`]+)`/g, "<code>$1</code>")}</li>`).join("");
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(report.title)} · Release Sieve</title><style>
+:root{color-scheme:dark;--ink:#eef2ff;--muted:#a7b0cc;--panel:#151b31;--line:#2b3556;--accent:#8b9cff;--warn:#ffcb6b}*{box-sizing:border-box}body{margin:0;background:#0b1020;color:var(--ink);font:16px/1.55 Inter,ui-sans-serif,system-ui,sans-serif}.wrap{max-width:900px;margin:auto;padding:52px 24px 72px}header{padding:32px;border:1px solid var(--line);border-radius:18px;background:radial-gradient(circle at top right,#27366d,#151b31 55%)}h1{font-size:clamp(2rem,6vw,3.6rem);line-height:1.05;margin:0 0 12px}.eyebrow{color:#bec8ff;margin:0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}.metric{padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px}.metric strong{display:block;font-size:1.7rem}.metric small{color:var(--muted)}section{margin-top:34px}h2{font-size:1.1rem;letter-spacing:.02em}h2 span{color:var(--muted);font-weight:500}ul{padding:0;list-style:none}.changes li{display:flex;gap:16px;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line)}code{font:13px ui-monospace,SFMono-Regular,monospace;color:#cbd4ff;background:#202a4a;padding:2px 6px;border-radius:5px;white-space:nowrap}.signals{padding:18px 20px;border-left:3px solid var(--warn);background:#2b2530;border-radius:0 12px 12px 0}.signals li+li{margin-top:10px}.checklist li{margin:9px 0;color:var(--muted)}footer{margin-top:48px;color:var(--muted);font-size:.9rem}@media(max-width:560px){.grid{grid-template-columns:1fr}.changes li{align-items:flex-start;flex-direction:column;gap:4px}}</style></head>
+<body><main class="wrap"><header><p class="eyebrow">Release brief · ${escapeHtml(report.base)} → HEAD</p><h1>${escapeHtml(report.title)}</h1><p class="eyebrow">A decision-ready snapshot of the changes waiting to ship.</p></header>
+<div class="grid"><div class="metric"><strong>${report.commits.length}</strong><small>commits</small></div><div class="metric"><strong>${report.files.length}</strong><small>files touched</small></div><div class="metric"><strong>+${report.additions} / −${report.deletions}</strong><small>lines changed</small></div></div>
+${groupMarkup}<section><h2>Release signals <span>${riskCount ? `${riskCount} to review` : "clear"}</span></h2><ul class="signals">${signalMarkup}</ul></section><section><h2>Suggested ship checklist</h2><ul class="checklist"><li>☐ Run the relevant automated checks</li><li>☐ Verify the user-facing happy path</li><li>☐ Confirm rollback or mitigation ownership</li></ul></section><footer>Generated locally by <strong>release-sieve</strong> — no release data left your machine.</footer></main></body></html>\n`;
+}

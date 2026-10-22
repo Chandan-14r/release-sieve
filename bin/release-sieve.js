@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
-import { analyzeHistory, renderJson, renderMarkdown } from "../src/analyze.js";
+import { analyzeHistory, renderHtml, renderJson, renderMarkdown } from "../src/analyze.js";
 
 function usage() {
   console.log(`release-sieve — make a release brief from git history
 
 Usage:
-  release-sieve [base] [--title "Release title"] [--format markdown|json] [--out brief.md]
+  release-sieve [base] [--title "Release title"] [--format markdown|json|html] [--out brief.md]
 
 Examples:
   release-sieve v1.4.0 --title "October reliability release"
-  release-sieve HEAD~12 --format json --out release-brief.json`);
+  release-sieve HEAD~12 --format html --out release-brief.html`);
 }
 
 function readGit(args) {
@@ -34,11 +34,11 @@ const base = args.find((item, index) =>
 ) || "HEAD~10";
 
 try {
-  if (!['markdown', 'json'].includes(format)) throw new Error(`Unsupported format \"${format}\". Use markdown or json.`);
+  if (!['markdown', 'json', 'html'].includes(format)) throw new Error(`Unsupported format \"${format}\". Use markdown, json, or html.`);
   const commits = readGit(["log", "--format=%H%x1f%s%x1e", `${base}..HEAD`]);
   const stat = readGit(["diff", "--numstat", `${base}..HEAD`]);
   const report = analyzeHistory(commits, stat, { title, base });
-  const output = format === "json" ? renderJson(report) : renderMarkdown(report);
+  const output = format === "json" ? renderJson(report) : format === "html" ? renderHtml(report) : renderMarkdown(report);
   if (out) {
     const { writeFileSync } = await import("node:fs");
     writeFileSync(out, output);

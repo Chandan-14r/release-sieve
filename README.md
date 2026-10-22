@@ -11,6 +11,7 @@ It is intentionally dependency-free and works offline—useful when release note
 - Flags paths and messages that often warrant a closer release review
 - Produces human-editable Markdown for PRs, changelogs, or release channels
 - Exports stable JSON for release dashboards, CI checks, and delivery bots
+- Generates a polished, self-contained HTML brief for async release reviews
 - Runs on Node.js 18+ with no install step
 
 ## Quick start
@@ -38,6 +39,16 @@ node -e "const r = require('./release-brief.json'); process.exit(r.summary.riskS
 ```
 
 `--format markdown` remains the default. JSON is deliberately local and deterministic, making it suitable for CI artifacts without an API token.
+
+### Share an async release review
+
+Create an attractive, standalone review page that can be attached to a release ticket or opened locally—no build pipeline or hosted dashboard required.
+
+```bash
+release-sieve v1.4.0 --title "October reliability release" --format html --out release-brief.html
+```
+
+The HTML report includes the release footprint, categorized commits, risk signals, and a ship checklist. It is self-contained and safely escapes commit subjects and paths.
 
 ## Example output
 
